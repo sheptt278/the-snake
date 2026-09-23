@@ -4,7 +4,6 @@ from random import choice, randint
 
 import pygame
 
-
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
@@ -111,7 +110,6 @@ class Snake(GameObject):
                 or self.direction[1] + self.next_direction[1] != 0
             ):
                 self.direction = self.next_direction
-
         self.next_direction = None
 
     def move(self):
