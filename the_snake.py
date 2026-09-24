@@ -1,9 +1,8 @@
 """Игра «Змейка» на pygame."""
 
 from random import choice, randint
+
 import pygame as pg
-
-
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
@@ -45,7 +44,7 @@ class GameObject:
         self.body_color = body_color
 
     def draw_cell(self, position, color=None):
-        """Отрисовывает клетку в заданной позиции."""
+        """Отрисовывает одну клетку игрового поля."""
         if color is None:
             color = self.body_color
 
@@ -56,26 +55,24 @@ class GameObject:
             pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
     def draw(self):
-        """Сообщает о том, что метод не переопределён."""
+        """Требует реализации от дочернего класса."""
         raise NotImplementedError(
-            f'Метод draw() не реализован в {self.__class__.__name__}.'
+            f'Mетод draw() не реализован в {self.__class__.__name__}.'
         )
 
 
 class Apple(GameObject):
-    """Класс яблока на игровом поле."""
+    """Яблоко на игровом поле."""
 
     def __init__(self, occupied_positions=None, body_color=APPLE_COLOR):
         """Создаёт яблоко в свободной клетке."""
         super().__init__(body_color)
-
         if occupied_positions is None:
             occupied_positions = []
-
         self.randomize_position(occupied_positions)
 
     def randomize_position(self, occupied_positions=None):
-        """Помещает яблоко в случайную незанятую клетку."""
+        """Размещает яблоко на свободной клетке."""
         if occupied_positions is None:
             occupied_positions = []
 
@@ -93,19 +90,19 @@ class Apple(GameObject):
 
 
 class Snake(GameObject):
-    """Класс змейки на игровом поле."""
+    """Змейка игрока."""
 
     def __init__(self, body_color=SNAKE_COLOR):
-        """Создаёт змейку указанного цвета."""
+        """Создаёт змейку."""
         super().__init__(body_color)
         self.reset()
 
     def get_head_position(self):
-        """Возвращает координаты головы змейки."""
+        """Возвращает позицию головы змейки."""
         return self.positions[0]
 
     def update_direction(self, new_direction=None):
-        """Меняет направление без разворота на 180 градусов."""
+        """Обновляет направление, исключая разворот на 180 градусов."""
         if new_direction is None:
             return
 
@@ -124,15 +121,15 @@ class Snake(GameObject):
                 (head_y + direction_y * GRID_SIZE) % SCREEN_HEIGHT,
             ),
         )
-        self.last = None
 
+        self.last = None
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
 
         self.position = self.get_head_position()
 
     def reset(self):
-        """Возвращает змейку в стартовое состояние."""
+        """Возвращает змейку в начальное состояние."""
         self.length = 1
         self.position = CENTER
         self.positions = [CENTER]
@@ -140,15 +137,15 @@ class Snake(GameObject):
         self.last = None
 
     def draw(self):
-        """Рисует голову и очищает прежний хвост."""
+        """Рисует новую голову и очищает предыдущий хвост."""
         self.draw_cell(self.get_head_position())
 
-        if self.last:
+        if self.last is not None:
             self.draw_cell(self.last, BOARD_BACKGROUND_COLOR)
 
 
 def handle_keys(snake, speed):
-    """Обрабатывает клавиши и возвращает обновлённую скорость."""
+    """Обрабатывает события клавиатуры и возвращает скорость."""
     directions_by_key = {
         pg.K_UP: UP,
         pg.K_DOWN: DOWN,
@@ -161,22 +158,20 @@ def handle_keys(snake, speed):
             pg.quit()
             raise SystemExit
 
-        if event.type == pg.KEYDOWN:
-            if event.key == pg.K_ESCAPE:
-                pg.quit()
-                raise SystemExit
+        if event.type != pg.KEYDOWN:
+            continue
 
-            new_direction = directions_by_key.get(event.key)
-            if new_direction:
-                snake.update_direction(new_direction)
-            elif event.key in (
-                pg.K_PLUS,
-                pg.K_EQUALS,
-                pg.K_KP_PLUS,
-            ):
-                speed = min(MAX_SPEED, speed + SPEED_STEP)
-            elif event.key in (pg.K_MINUS, pg.K_KP_MINUS):
-                speed = max(MIN_SPEED, speed - SPEED_STEP)
+        if event.key == pg.K_ESCAPE:
+            pg.quit()
+            raise SystemExit
+
+        new_direction = directions_by_key.get(event.key)
+        if new_direction is not None:
+            snake.update_direction(new_direction)
+        elif event.key in (pg.K_PLUS, pg.K_EQUALS, pg.K_KP_PLUS):
+            speed = min(MAX_SPEED, speed + SPEED_STEP)
+        elif event.key in (pg.K_MINUS, pg.K_KP_MINUS):
+            speed = max(MIN_SPEED, speed - SPEED_STEP)
 
     return speed
 
@@ -190,7 +185,7 @@ def update_caption(speed, max_length):
 
 
 def main():
-    """Запускает игровой цикл."""
+    """Запускает игру."""
     pg.init()
     screen.fill(BOARD_BACKGROUND_COLOR)
 
@@ -212,7 +207,6 @@ def main():
             snake.length += 1
             max_length = max(max_length, snake.length)
             apple.randomize_position(snake.positions)
-
         elif (
             snake.length > 3
             and snake.get_head_position() in snake.positions[1:]
@@ -225,7 +219,6 @@ def main():
         snake.draw()
         apple.draw()
         update_caption(speed, max_length)
-
         pg.display.update()
         clock.tick(speed)
 
