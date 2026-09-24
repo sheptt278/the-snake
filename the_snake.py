@@ -29,6 +29,9 @@ APPLE_COLOR = (255, 0, 0)
 SNAKE_COLOR = (0, 255, 0)
 
 SPEED = 20
+MIN_SPEED = 5
+MAX_SPEED = 60
+SPEED_STEP = 2
 
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 clock = pg.time.Clock()
@@ -145,8 +148,8 @@ class Snake(GameObject):
             self.draw_cell(self.last, BOARD_BACKGROUND_COLOR)
 
 
-def handle_keys(snake):
-    """Обрабатывает нажатия клавиш управления."""
+def handle_keys(snake, speed):
+    """Обрабатывает клавиши и возвращает обновлённую скорость."""
     directions_by_key = {
         pg.K_UP: UP,
         pg.K_DOWN: DOWN,
@@ -167,6 +170,24 @@ def handle_keys(snake):
             new_direction = directions_by_key.get(event.key)
             if new_direction:
                 snake.update_direction(new_direction)
+            elif event.key in (
+                pg.K_PLUS,
+                pg.K_EQUALS,
+                pg.K_KP_PLUS,
+            ):
+                speed = min(MAX_SPEED, speed + SPEED_STEP)
+            elif event.key in (pg.K_MINUS, pg.K_KP_MINUS):
+                speed = max(MIN_SPEED, speed - SPEED_STEP)
+
+    return speed
+
+
+def update_caption(speed, max_length):
+    """Обновляет заголовок игрового окна."""
+    pg.display.set_caption(
+        'Змейка | ESC — выход | +/- или = — скорость | '
+        f'Скорость: {speed} | Рекорд: {max_length}'
+    )
 
 
 def main():
@@ -176,17 +197,21 @@ def main():
 
     snake = Snake()
     apple = Apple(snake.positions)
+    speed = SPEED
+    max_length = snake.length
 
     apple.draw()
     snake.draw()
+    update_caption(speed, max_length)
     pg.display.update()
 
     while True:
-        handle_keys(snake)
+        speed = handle_keys(snake, speed)
         snake.move()
 
         if snake.get_head_position() == apple.position:
             snake.length += 1
+            max_length = max(max_length, snake.length)
             apple.randomize_position(snake.positions)
 
         elif (
@@ -200,12 +225,10 @@ def main():
 
         snake.draw()
         apple.draw()
+        update_caption(speed, max_length)
 
-        pg.display.set_caption(
-            f'Змейка | ESC — выход | Длина: {snake.length}'
-        )
         pg.display.update()
-        clock.tick(SPEED)
+        clock.tick(speed)
 
 
 if __name__ == '__main__':
