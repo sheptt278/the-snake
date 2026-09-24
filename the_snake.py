@@ -1,7 +1,6 @@
 """Игра «Змейка» на pygame."""
 
 from random import choice, randint
-
 import pygame as pg
 
 
